@@ -22,18 +22,17 @@ def get_label(file_name):
 
 def get_features(file_name):
     rate, signal = wavfile.read(file_name)
-    print(signal.shape)
-    plt.plot(signal)
-    plt.show()
+    # print(signal.shape)
+    # plt.plot(signal)
+    # plt.show()
 
     N = 40
     gamma = 0.5
     window_size = signal.shape[0] / (N * (1 - gamma) + gamma)
     frames = framesig(signal, window_size, window_size * 0.5)
-    print(frames.shape)
-
-    plt.imshow(frames)
-    plt.show()
+    # print(frames.shape)
+    # plt.imshow(frames)
+    # plt.show()
 
     weighting = np.hanning(window_size)
 
@@ -44,8 +43,8 @@ def get_features(file_name):
     fft[1:-1, :] *= 2.0 / scale
     fft[(0, -1), :] /= scale
     fft = np.log(np.clip(fft, a_min=1e-6, a_max=None))
-    plt.imshow(fft)
-    plt.show()
+    # plt.imshow(fft)
+    # plt.show()
 
     freqs = float(rate) / window_size * np.arange(fft.shape[0])
 
@@ -56,7 +55,6 @@ def get_features(file_name):
     band3 = []
     band4 = []
 
-    frames = []
     for i in range(40):
         bands = []
         band0 = []
@@ -92,30 +90,29 @@ def get_features(file_name):
         bands.append(
             np.sum(band4) / (np.shape(band4)[0] if np.shape(band4)[0] > 0 else 1)
         )
-        frames.append(bands)
+        features.append(bands)
 
-    return frames
-
-
-def get_spikes(features):
-    pass
+    return features
 
 
 def run(path):
-    audio_files = os.listdir(path)[:1]
+    audio_files = os.listdir(path)[:100]
 
     labels = []
     features = []
     input_spikes = {}
 
     for audio_file in audio_files:
-        print(audio_file)
         full_path = os.path.join(path, audio_file)
         with open(full_path, "r") as f:
             labels.append(get_label(audio_file))
             features.append(get_features(full_path))
-            print(features[-1][0])
-            # input_spikes[audio_file] = get_spikes(features)
+
+    features = np.array(features)
+    labels = np.array(labels)
+
+    print(features.shape)
+    print(labels.shape)
 
 
 if __name__ == "__main__":
