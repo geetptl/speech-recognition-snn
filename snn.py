@@ -1,19 +1,11 @@
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
-from random import shuffle
 import os
-import sys
-from datetime import datetime
-import copy
-import math
 from scipy.signal import spectrogram
 from scipy.io import wavfile
 from python_speech_features.sigproc import framesig
-import librosa
 import random as random
-from matplotlib.pyplot import specgram
-import wave
 
 
 def get_label(file_name):
@@ -49,11 +41,6 @@ def get_features(file_name):
     freqs = float(rate) / window_size * np.arange(fft.shape[0])
 
     features = []
-    band0 = []
-    band1 = []
-    band2 = []
-    band3 = []
-    band4 = []
 
     for i in range(40):
         bands = []
@@ -109,6 +96,9 @@ def run(path):
             features.append(get_features(full_path))
 
     features = np.array(features)
+    features = np.reshape(
+        features, (features.shape[0], features.shape[1] * features.shape[2])
+    )
     labels = np.array(labels)
 
     print(features.shape)
