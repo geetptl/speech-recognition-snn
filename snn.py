@@ -6,10 +6,13 @@ from scipy.signal import spectrogram
 from scipy.io import wavfile
 from python_speech_features.sigproc import framesig
 import random as random
+import torch
+from torch.utils.data import Dataset, DataLoader
+from torch.utils.data.dataset import random_split
 
 
 def get_label(file_name):
-    return file_name.split("_")[0]
+    return int(file_name.split("_")[0])
 
 
 def get_features(file_name):
@@ -82,6 +85,81 @@ def get_features(file_name):
     return features
 
 
+class SDDataset(Dataset):
+    def __init__(self, features, labels):
+        self.features = torch.tensor(features, dtype=torch.float32)
+        self.labels = torch.tensor(labels, dtype=torch.long)
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, index):
+        return self.features[index], self.labels[index]
+
+
+class Izhi:
+    def __init__(self, a, b, c, d, Vth, T, dt):
+        self.a = a
+        self.b = b
+        self.c = c
+        self.d = d
+        self.Vth = Vth
+        self.u = self.b * self.c
+        self.T = T
+        self.dt = dt
+        self.t = np.arange(0, self.T, self.dt)
+        self.in_synapes = []
+        self.out_synapes = []
+
+    # I is an array of length self.t
+    def run(self, I):
+        V = np.zeros(len(self.t)) #Initialize a numpy array containing the membrane voltages for all the timesteps
+        V[0] = self.c #Initial membrane voltage is the rest potential, defined by the parameter 'c'
+        u = np.zeros(len(self.t)) #Initialize a numpy array containing u for all the timesteps
+        u[0] = self.u #Initial u
+        num_spikes = 0
+        for t in range(1, len(self.t)): #the time loop for performing euler's integration
+            dv = ((0.04 * V[t-1]**2) + (5 * V[t-1]) + 140 - u[t-1] + I[t-1]) * self.dt
+            du = (self.a * ((self.b * V[t-1]) - u[t-1])) * self.dt
+            V[t] = V[t-1] + dv
+            u[t] = u[t-1] + du
+            
+            #condition for when membrane potential is greater than the threshold
+            if V[t] >= self.Vth:
+                V[t] = self.c
+                u[t] = self.d + u[t]
+                num_spikes += 1
+
+        return V, num_spikes
+
+
+class Synapse:
+    def __init__(self):
+        self.weight = 1
+    
+    def hebbian(self):
+        pass
+
+    def anti_hebbian(self):
+        pass
+
+
+class Network:
+    def __init__(self):
+        self.layer_1 = [Izhi() for i in range(200)]
+        self.synapse_layer = [[Synapse() for j in range(200)] for i in range(10)]
+        self.layer_2 = [Izhi() for i in range(10)]
+
+        for i, synapse1_ in enumerate(self.synapses):
+            for j, synapse_ in enumerate(synapse1_):
+                layer_2[i].in_synapes.append(synapse_)
+                layer_1[j].out_synapes.append(synapse_)
+
+    def forward(self, feature, label):
+        # print("hello")
+        pass
+
+
 def run(path):
     audio_files = os.listdir(path)[:100]
 
@@ -103,6 +181,12 @@ def run(path):
 
     print(features.shape)
     print(labels.shape)
+
+    # dataset = SDDataset(features, labels)
+    # train, test = random_split(dataset, [0.7, 0.3])
+
+    # print(len(train))
+    # print(len(test))
 
 
 if __name__ == "__main__":
