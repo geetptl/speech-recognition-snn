@@ -1,7 +1,7 @@
 import numpy as np
+from matplotlib import pyplot as plt
 
-
-class Izhi:
+class Izhikevich:
     def __init__(self, a, b, c, d, Vth, T, dt):
         self.a = a
         self.b = b
@@ -35,6 +35,30 @@ class Izhi:
 
         return V, num_spikes
 
+T = 1000
+dt = 0.1
+t = np.arange(0, T, dt)
+izhi = Izhikevich(0.02, 0.2, -65, 2, 30, T, dt)
+
+I = 25
+i_inj = np.linspace(0, I, t.shape[0])
+V, num_spikes = izhi.run(i_inj)
+
+print(num_spikes)
+
+plt.figure()
+plt.subplot(2,1,1)
+plt.title('Izhi Neuron')
+plt.plot(t, V, 'k')
+plt.ylabel('V')
+
+plt.subplot(2,1,2)
+plt.plot(t, i_inj, 'k')
+plt.xlabel('t')
+plt.ylabel('$I_{inj}$ ($\\mu{A}/cm^2$)')
+
+plt.show()
+
 
 class Synapse:
     def __init__(self):
@@ -49,9 +73,9 @@ class Synapse:
 
 class Network:
     def __init__(self):
-        self.layer_1 = [Izhi() for i in range(200)]
+        self.layer_1 = [Izhikevich() for i in range(200)]
         self.synapse_layer = [[Synapse() for j in range(200)] for i in range(10)]
-        self.layer_2 = [Izhi() for i in range(10)]
+        self.layer_2 = [Izhikevich() for i in range(10)]
 
         for i, synapse1_ in enumerate(self.synapses):
             for j, synapse_ in enumerate(synapse1_):
