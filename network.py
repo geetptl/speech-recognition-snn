@@ -42,6 +42,7 @@ izhi = Izhikevich(0.02, 0.2, -65, 2, 30, T, dt)
 
 I = 25
 i_inj = np.linspace(0, I, t.shape[0])
+# i_inj = np.full(t.shape, I)
 V, num_spikes = izhi.run(i_inj)
 
 print(num_spikes)
