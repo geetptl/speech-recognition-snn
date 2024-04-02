@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
+
 class Izhikevich:
     def __init__(self, a, b, c, d, Vth, T, dt):
         self.a = a
@@ -35,6 +36,7 @@ class Izhikevich:
 
         return V, num_spikes
 
+
 T = 1000
 dt = 0.1
 t = np.arange(0, T, dt)
@@ -48,15 +50,15 @@ V, num_spikes = izhi.run(i_inj)
 print(num_spikes)
 
 plt.figure()
-plt.subplot(2,1,1)
-plt.title('Izhi Neuron')
-plt.plot(t, V, 'k')
-plt.ylabel('V')
+plt.subplot(2, 1, 1)
+plt.title("Izhi Neuron")
+plt.plot(t, V, "k")
+plt.ylabel("V")
 
-plt.subplot(2,1,2)
-plt.plot(t, i_inj, 'k')
-plt.xlabel('t')
-plt.ylabel('$I_{inj}$ ($\\mu{A}/cm^2$)')
+plt.subplot(2, 1, 2)
+plt.plot(t, i_inj, "k")
+plt.xlabel("t")
+plt.ylabel("$I_{inj}$ ($\\mu{A}/cm^2$)")
 
 plt.show()
 
