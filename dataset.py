@@ -1,11 +1,11 @@
 import os
 import librosa
-import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torchaudio
 import torchaudio.transforms as transforms
 from torch.utils.data import TensorDataset
+# import matplotlib.pyplot as plt
 
 
 def get_label(file_name):
@@ -63,6 +63,11 @@ def load(dir_path):
 
         mfcc = mfcc_transform(waveform)
         inputs.append(mfcc[0])
+        # fig, axs = plt.subplots(2, 1)
+        # plot_waveform(waveform, sample_rate, title=f"Original waveform for sample {get_label(file)}", ax=axs[0])
+        # plot_spectrogram(mfcc[0], title="MFCC", ax=axs[1])
+        # fig.tight_layout()
+        # plt.show()
 
     max_size = max([input_.shape[1] for input_ in inputs])
     inputs = [nn.functional.pad(input_, (0, max_size - input_.shape[1]), "constant", 0) for input_ in inputs]

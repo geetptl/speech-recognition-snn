@@ -5,6 +5,8 @@ from torch.utils.data import DataLoader, random_split
 import torch.nn as nn
 import torch.optim as optim
 import network as N
+# import matplotlib.pyplot as plt
+# import numpy as np
 
 
 def run(path):
@@ -58,7 +60,7 @@ def run(path):
                     _, predicted = torch.max(outputs, 1)
                     test_correct_num += (predicted == label).sum().item()
             test_accuracy_list.append(test_correct_num / test_num)
-            print(f"accuracy {test_accuracy_list[-1]:.2f}")
+            print(f"\taccuracy {test_accuracy_list[-1]:.2f}")
         network.to("cpu")
         return train_loss_list, test_accuracy_list
 
@@ -72,6 +74,26 @@ def run(path):
     train_loss_list, test_accuracy_list = stbp_snn_training(
         network=snn, spike_ts=5, device=device, batch_size=32, test_batch_size=64, epoch=20
     )
+
+    # fig, ax1 = plt.subplots()
+
+    # color1 = 'tab:orange'
+    # ax1.set_xlabel('epoch')
+    # ax1.set_ylabel('Training Loss', color=color1)
+    # ax1.set_xticks(range(0, len(train_loss_list)))
+    # ax1.plot(train_loss_list, color=color1)
+    # ax1.tick_params(axis='y')
+    # ax1.grid(visible=True, which='major', axis='y', color=color1, alpha=0.4)
+    # ax2 = ax1.twinx()
+
+    # color2 = 'tab:blue'
+    # ax2.set_ylabel('Accuracy', color=color2)
+    # ax2.plot(test_accuracy_list, color=color2)
+    # ax2.grid(visible=True, which='major', axis='y', color=color2, alpha=0.4)
+    # ax2.tick_params(axis='y')
+
+    # fig.tight_layout()
+    # plt.show()
 
 
 if __name__ == "__main__":
