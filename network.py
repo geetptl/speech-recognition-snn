@@ -2,65 +2,71 @@ import torch
 import torch.nn as nn
 
 
-class PseudoSpikeRect(torch.autograd.Function):
-
+class AdaptiveRateDynamicThresholdSpike(torch.autograd.Function):
     @staticmethod
-    def forward(ctx, input, vth, grad_win, grad_amp):
+    def forward(ctx, input, vth, threshold_adaptation, grad_amp, rate_scale):
         ctx.save_for_backward(input)
         ctx.vth = vth
-        ctx.grad_win = grad_win
+        ctx.threshold_adaptation = threshold_adaptation
         ctx.grad_amp = grad_amp
+        ctx.rate_scale = rate_scale
 
-        output = torch.gt(input, ctx.vth).float()
+        # Dynamic thresholding based on the current input max
+        scaled_input = rate_scale * input
+        dynamic_vth = vth * torch.tanh(threshold_adaptation * torch.max(scaled_input))
+        output = torch.gt(scaled_input, dynamic_vth).float()
 
         return output
 
     @staticmethod
     def backward(ctx, grad_output):
-        (input,) = ctx.saved_tensors
+        input, = ctx.saved_tensors
         vth = ctx.vth
-        grad_win = ctx.grad_win
+        threshold_adaptation = ctx.threshold_adaptation
         grad_amp = ctx.grad_amp
-        grad_input = grad_output.clone()
+        rate_scale = ctx.rate_scale
 
-        spike_pseudo_grad = torch.le(abs(input - vth), grad_win)
+        scaled_input = rate_scale * input
+        dynamic_vth = vth * torch.tanh(threshold_adaptation * torch.max(scaled_input))
+        spike_pseudo_grad = torch.exp(-((scaled_input - dynamic_vth)**2))
 
-        grad = grad_amp * grad_input * spike_pseudo_grad.float()
-        return grad, None, None, None
+        grad = grad_amp * grad_output * spike_pseudo_grad
+        return grad, None, None, None, None
 
 
-class LinearIFCell(nn.Module):
+class LIFNeurons(nn.Module):
 
     def __init__(self, psp_func, pseudo_grad_ops, param):
-        super(LinearIFCell, self).__init__()
+        super(LIFNeurons, self).__init__()
         self.psp_func = psp_func
         self.pseudo_grad_ops = pseudo_grad_ops
-        self.vdecay, self.vth, self.grad_win, self.grad_amp = param
+        self.vdecay, self.vth, self.grad_win, self.grad_amp, self.rate_scale = param
 
     def forward(self, input_data, state):
         pre_spike, pre_volt = state
 
         volt = pre_volt * self.vdecay * (1 - pre_spike) + self.psp_func(input_data)
 
-        output = self.pseudo_grad_ops(volt, self.vth, self.grad_win, self.grad_amp)
+        # output = self.pseudo_grad_ops(volt, self.vth, self.grad_win, self.grad_amp)
+        output = self.pseudo_grad_ops(volt, self.vth, self.grad_win, self.grad_amp, self.rate_scale)
 
         return output, (output, volt)
 
 
-class SingleHiddenLayerSNN(nn.Module):
+class SNN(nn.Module):
 
     def __init__(self, input_dim, output_dim, hidden_dim, param_dict):
-        super(SingleHiddenLayerSNN, self).__init__()
+        super(SNN, self).__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.hidden_dim = hidden_dim
-        pseudo_grad_ops = PseudoSpikeRect.apply
+        pseudo_grad_ops = AdaptiveRateDynamicThresholdSpike.apply
 
-        self.hidden_cell = LinearIFCell(
+        self.hidden_cell = LIFNeurons(
             nn.Linear(self.input_dim, self.hidden_dim, bias=False), pseudo_grad_ops, param_dict["hid_layer"]
         )
 
-        self.output_cell = LinearIFCell(
+        self.output_cell = LIFNeurons(
             nn.Linear(self.hidden_dim, self.output_dim, bias=False), pseudo_grad_ops, param_dict["out_layer"]
         )
 
@@ -82,14 +88,14 @@ class SingleHiddenLayerSNN(nn.Module):
         return output
 
 
-class WrapSNN(nn.Module):
+class SNN_Network(nn.Module):
     def __init__(self, input_dim, output_dim, hidden_dim, param_dict, device):
-        super(WrapSNN, self).__init__()
+        super(SNN_Network, self).__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.hidden_dim = hidden_dim
         self.device = device
-        self.snn = SingleHiddenLayerSNN(input_dim, output_dim, hidden_dim, param_dict)
+        self.snn = SNN(input_dim, output_dim, hidden_dim, param_dict)
 
     def forward(self, spike_data):
         batch_size = spike_data.shape[0]
@@ -108,7 +114,7 @@ class WrapSNN(nn.Module):
         return output
 
 
-def img_2_event_img(image, device, spike_ts):
+def generate_spike_signatures(image, device, spike_ts):
     batch_size = image.shape[0]
     channel_size = image.shape[1]
     image_size_d1 = image.shape[2]

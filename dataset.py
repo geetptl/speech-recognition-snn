@@ -5,7 +5,7 @@ import torch.nn as nn
 import torchaudio
 import torchaudio.transforms as transforms
 from torch.utils.data import TensorDataset
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 
 def get_label(file_name):
@@ -43,7 +43,7 @@ n_mfcc = 64
 
 
 def load(dir_path):
-    audio_files = os.listdir(dir_path)[:3000]
+    audio_files = os.listdir(dir_path)
 
     labels = [get_label(file) for file in audio_files]
     inputs = []

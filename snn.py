@@ -14,7 +14,7 @@ def run(path):
     dataset = D.load(path)
     print(f"{len(dataset)} samples")
 
-    def stbp_snn_training(network, spike_ts, device, batch_size=128, test_batch_size=256, epoch=100):
+    def snn_training(network, spike_ts, device, batch_size=128, test_batch_size=256, epoch=100):
         train_dataset, test_dataset = random_split(dataset, [0.7, 0.3])
         train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
         test_dataloader = DataLoader(test_dataset, batch_size=test_batch_size, shuffle=False, num_workers=4)
@@ -34,7 +34,7 @@ def run(path):
                 image, label = data
                 image = image.to(device)
                 label = label.to(device)
-                event_image = N.img_2_event_img(image, device, spike_ts)
+                event_image = N.generate_spike_signatures(image, device, spike_ts)
 
                 optimizer.zero_grad()
                 output = network(event_image)
@@ -54,7 +54,7 @@ def run(path):
                     image, label = data
                     image = image.to(device)
                     label = label.to(device)
-                    event_image = N.img_2_event_img(image, device, spike_ts)
+                    event_image = N.generate_spike_signatures(image, device, spike_ts)
 
                     outputs = network(event_image)
                     _, predicted = torch.max(outputs, 1)
@@ -67,12 +67,12 @@ def run(path):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"device {device}")
 
-    param_dict = {"hid_layer": [0.5, 0.6, 0.4, 0.95], "out_layer": [0.5, 0.6, 0.4, 0.95]}
+    param_dict = {"hid_layer": [0.5, 0.6, 0.4, 0.95, 0.8], "out_layer": [0.5, 0.6, 0.4, 0.95, 0.8]}
 
-    snn = N.WrapSNN(9152, 10, 256, param_dict, device)
+    snn = N.SNN_Network(9152, 10, 256, param_dict, device)
 
-    train_loss_list, test_accuracy_list = stbp_snn_training(
-        network=snn, spike_ts=5, device=device, batch_size=32, test_batch_size=64, epoch=20
+    train_loss_list, test_accuracy_list = snn_training(
+        network=snn, spike_ts=5, device=device, batch_size=32, test_batch_size=64, epoch=15
     )
 
     # fig, ax1 = plt.subplots()
