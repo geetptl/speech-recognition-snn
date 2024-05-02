@@ -20,33 +20,12 @@ python3 snn.py
 ```
 
 ## Sample output
-```
-Loading data...
-3000 samples
-device cuda
-epoch 0
-        training loss 2.28
-accuracy 0.19
-epoch 1
-        training loss 2.17
-accuracy 0.31
-epoch 2
-        training loss 1.78
-accuracy 0.43
-epoch 3
-        training loss 1.20
-accuracy 0.59
-...
-epoch 17
-        training loss 0.07
-accuracy 0.84
-epoch 18
-        training loss 0.07
-accuracy 0.84
-epoch 19
-        training loss 0.07
-accuracy 0.85
-```
+
+![](./plots/mfcc_3.png)
+
+![](./plots/training_plot.png)
+
+Code for plot is commented out. Uncomment only after making sure you aren't plotting 3000 times.
 
 ## Formatting used
 ```bash
